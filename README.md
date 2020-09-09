@@ -44,7 +44,7 @@ In this exercise I have to consider the following specifications for each car:
 
 Given this information, the ER Model we have created is the following:
 
-![picture alt](https://teste-martinho-page.s3-eu-west-1.amazonaws.com/share/db.png "ER Model - Drover")
+![picture alt](https://teste-martinho-page.s3-eu-west-1.amazonaws.com/share/drover_db.png "ER Model - Drover")
 
 ### Endpoints
 I've to build 3 different endpoints:
