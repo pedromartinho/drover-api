@@ -1,7 +1,6 @@
-class Color < ApplicationRecord
+class Maker < ApplicationRecord
   # RELATIONS
-  has_many :cars
-  has_and_belongs_to_many :models
+  has_many :models
 
   # VALIDATIONS
   validates :name, presence: true, uniqueness: true
