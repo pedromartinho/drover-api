@@ -1,4 +1,4 @@
-# Drover BackEnd test
+# Drover BackEnd test (On Going...)
 This is my submission for the Back-End Take Home Challenge by Drover. The excercise documentation can e find here: https://github.com/DroverLtd/code-challenge-be
 
 You can find my solution live here: https://drover-api.herokuapp.com/cars 
@@ -11,23 +11,23 @@ To facilitate the instalation process, I've used docker and will present the ste
 
 After that, you can build the database and app container by running
 
-```sudo docker-compose build```
+```docker-compose build```
 
 This will build the docker images and you can run them, by executing the following line:
 
-```sudo docker-compose up -d```
+```docker-compose up -d```
 
 Now that both imaged are up and running, we need to go inside the app container and create the database. To do so, you can run ```docker ps```, take the app container id and run the following line:
 
 ```docker exec -it <container_id> /bin/bash```
 
-Now you are inside the app container and we need to create the database and the 
+Now you are inside the app container and we need to create the database and the respective migrations to have
 
-```run raisl db:create db:migrate```
+```run rails db:create db:migrate```
 
 After that, you can write the presented script to generate **100 cars**, **3 brands** and **6 models**.
 
-```run raisl populate:cars```
+```run rails populate:cars```
 
 If you have problems performing this steps, do not hesitate contact me or you can find the live application on https://drover-api.herokuapp.com/cars.
 
