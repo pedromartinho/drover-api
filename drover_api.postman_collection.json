@@ -1,0 +1,204 @@
+{
+	"info": {
+		"_postman_id": "0eb2a0fd-6259-4dd4-8a8a-656100982d98",
+		"name": "Drover API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Cars",
+			"item": [
+				{
+					"name": "GET",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{api}}cars?limit=100&min_months=15&page=1&order=descend&field=make_n",
+							"host": [
+								"{{api}}cars"
+							],
+							"query": [
+								{
+									"key": "color_id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "model_id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "min_months",
+									"value": "15"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "order",
+									"value": "descend"
+								},
+								{
+									"key": "field",
+									"value": "make_n"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"color_id\": 1,\n    \"model_id\": 1,\n    \"license_plate\": \"AA-13-00\",\n    \"available_from\": \"2022-02-11\",\n    \"price\": 100,\n    \"year\": 2020\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{api}}cars",
+							"host": [
+								"{{api}}cars"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PUT",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}",
+								"disabled": true
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"color_id\": 9,\n    \"model_id\": 3,\n    \"license_plate\": \"AA-03-00\",\n    \"available_from\": \"2021-02-11\",\n    \"price\": 100,\n    \"year\": 2022\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{api}}cars/470",
+							"host": [
+								"{{api}}cars"
+							],
+							"path": [
+								"470"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "53f2f284-8703-4d9c-b8a2-2d2f9ed81bfb",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "66fbd5c2-2fc9-4601-aaec-ce99acc7a47f",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "795e2ec0-4466-4b79-ba0e-d7de32298e4e",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "3df0f32d-4bde-4785-b4b7-e40c8cb533a7",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "16e2b850-993d-41a1-bfea-e00b14f72f32",
+			"key": "api",
+			"value": "http://localhost:3000/"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -1,10 +1,10 @@
-# Drover BackEnd test (On Going...)
+# Drover Back-End Take Home Challenge
 
 This is my submission for the Back-End Take Home Challenge by Drover. The exercise documentation can e find here: <https://github.com/DroverLtd/code-challenge-be>
 
 You can find my solution live here: <https://drover-api.herokuapp.com/cars>
 
-## Inicial Set Up
+## Initial Setup
 
 To facilitate the installation process, I've used docker and will present the steps to have the project running locally for testing. The first step is to clone the project to your machine and you can do this by running the presented line on the terminal.
 
@@ -26,7 +26,7 @@ Now you are inside the app container and we need to create the database and the 
 
 ```run rails db:create db:migrate```
 
-After that, you can write the presented script to generate **234 cars**, **3 brands**, **6 models** and **9 colors** (3 colors per brand).
+After that, you can write the presented script to generate **234 cars**, **3 brands**, **6 models** and **9 colors** (3 colors per brand). The **populate:cars** creates 234 cars, 13 for each model and color combination
 
 ```run rails populate:makers_colors_models```
 ```run rails populate:cars```
@@ -54,15 +54,15 @@ Given this information, the ER Model we have created is the following:
 
 I've to build 3 different endpoints:
 
-* **POST /cars** | create
 * **GET /cars** | index
+* **POST /cars** | create
 * **PUT /cars/:car_id** | update
 
-Each of the endpoints will have multiple validations explained in the next topics.
+Each of the endpoints will have multiple validations explained in the next topics. For test purposes, I've created a postman collection (**drover_api.postman_collection.json**) that I've inserted in the repo. If you want to quickly test the application, you can import it into Postman and test it. The only thing that might need to be changed is the api variable that can be changed if you edit the collection itself.
 
 #### POST /cars | create
 
-The POST endpoint will be used for the creation of new cars. This endpoint receives a json object in the request body and will lead to the cration of a car in the database. Here's an example of a valid object for a car creation.
+The POST endpoint will be used for the creation of new cars. This endpoint receives a json object in the request body and will lead to the creation of a car in the database. Here's an example of a valid object for a car creation.
 
 ```{ "model_id": 1, "color_id": 1, "license_plate": "AA-03-00", "available_from": "2022-02-11", "price": 100, "year": 2020 }```
 
@@ -109,9 +109,9 @@ The returned object has the same format as the one returned in the create endpoi
 
 ### Deployment
 
-I've taken the liberty to deploy my solution on heroku in order to make it easier to test since you do not have to follow the set up process
+I've taken the liberty to deploy my solution on heroku in order to make it easier to test since you do not have to follow the setup process.
 
 ## Final notes
 
 Really enjoy doing this challenge! Hope you consider my solution appropriate. If there is any problem in the test process our there's any doubt I can clarify, just let me know.
-Hope to be part of the team soon. Looking foward for the next meeting.
+Hope to be part of the team soon. Looking forward for the next meeting.
