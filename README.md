@@ -25,8 +25,9 @@ Now you are inside the app container and we need to create the database and the 
 
 ```run rails db:create db:migrate```
 
-After that, you can write the presented script to generate **100 cars**, **3 brands** and **6 models**.
+After that, you can write the presented script to generate **234 cars**, **3 brands**, **6 models** and **9 colors** (3 colors per brand).
 
+```run rails populate:makers_colors_models```
 ```run rails populate:cars```
 
 If you have problems performing this steps, do not hesitate contact me or you can find the live application on https://drover-api.herokuapp.com/cars.
