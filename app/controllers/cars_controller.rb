@@ -1,5 +1,303 @@
 class CarsController < ApplicationController
+  before_action :ensure_self_params, only: %i[update]
+  before_action :ensure_index_params, only: %i[index]
+  before_action :ensure_sort_params, only: %i[index]
+  before_action :ensure_create_params, only: %i[create]
+  before_action :ensure_update_params, only: %i[update]
+
+  # POST /cars
   def index
-    render json: { message: 'ola' }, status: 200
+    limit = index_params[:limit].present? ? index_params[:limit].to_i : 10
+    offset = index_params[:page].present? ? (index_params[:page].to_i - 1) * limit : 0
+    sql = "
+      SELECT
+        c.id AS id,
+        c.license_plate AS license_plate,
+        c.year AS year,
+        c.price AS price,
+        CASE
+          WHEN c.available_from IS NULL THEN CURRENT_DATE
+          ELSE c.available_from
+        END AS available_from,
+        co.name AS color_n,
+        m.name AS model_n,
+        ma.name AS maker_n
+
+      FROM cars c
+        INNER JOIN models m
+          ON c.model_id = m.id
+        INNER JOIN makers ma
+          ON m.maker_id = ma.id
+        INNER JOIN colors co
+          ON c.color_id = co.id
+    "
+
+    if index_params[:color_id].present? || index_params[:color_id].present?
+      sql += ' WHERE '
+      if index_params[:model_id].present?
+        sql += " c.model_id = #{index_params[:model_id]} "
+        sql += ' AND ' if index_params[:color_id].present?
+      end
+      sql += " c.color_id = #{index_params[:color_id]}" if index_params[:color_id].present?
+    end
+    sql += if sort_params[:field].present?
+             sort_params[:order] == 'descend' ? " ORDER BY #{sort_params[:field]} desc " : "ORDER BY #{sort_params[:field]} asc "
+           else
+             ' ORDER BY price desc '
+           end
+
+    total = Car.find_by_sql(sql).count
+
+    sql += " OFFSET #{offset}
+      LIMIT #{limit}"
+
+    cars = Car.find_by_sql(sql)
+
+    colors = Color.select('id, name')
+    models = Model.select('id, name, maker_id')
+    makers = Maker.select('id, name')
+
+    render json: {
+      message: "Found #{total} cars.",
+      total:   total,
+      cars:    cars,
+      colors:  colors,
+      models:  models,
+      makers:  makers
+    }, status: 200
+  end
+
+  # POST /cars
+  def create
+    car = Car.create!(create_params)
+    render json: {
+      message: "Car #{@car.id} udpated!",
+      car:     {
+        id:             car.id,
+        license_plate:  car.license_plate,
+        year:           car.year,
+        available_from: car.available_from,
+        color_name:     car.color.name,
+        model_name:     car.model.name,
+        maker_name:     car.maker.name
+      }
+    }, status: 200
+  rescue StandardError => e
+    render json: {
+      message: 'Something went wrong in the car creation.',
+      error:   e.message
+    }, status: 400
+  end
+
+  # PUT /cars/:car_id
+  def update
+    @car.update!(update_params)
+    render json: {
+      message: "Car #{@car.id} udpated!",
+      car:     {
+        id:             @car.id,
+        license_plate:  @car.license_plate,
+        year:           @car.year,
+        available_from: @car.available_from,
+        color_name:     @car.color.name,
+        model_name:     @car.model.name,
+        maker_name:     @car.maker.name
+      }
+    }, status: 200
+  rescue StandardError => e
+    render json: {
+      message: 'Something went wrong in the car update.',
+      error:   e.message
+    }, status: 400
+  end
+
+  private
+
+  def self_params
+    params.permit(:id)
+  end
+
+  def ensure_self_params
+    @car = Car.find_by(id: self_params[:id].to_i)
+    if @car.nil?
+      render json: {
+        message: "Car with give id (#{self_params}) not found."
+      }, status: 404
+    end
+  end
+
+  def sort_params
+    params.permit(:field, :order)
+  end
+
+  def ensure_sort_params
+    available_fields = %w[available_from price year maker]
+    if sort_params[:field].present? && !available_fields.include?(sort_params[:field])
+      return render json: {
+        message: "Column #{sort_params[:field]} not available for sorting. The possible values are #{available_fields.join(', ')}"
+      }, status: 400
+    end
+    if sort_params[:order].present? && sort_params[:order] != 'ascend' && sort_params[:order] != 'descend'
+      render json: {
+        message: "The order query param value must 'ascend' or 'descend'"
+      }, status: 400
+    end
+  end
+
+  def index_params
+    params.permit(:color_id, :model_id, :page, :limit)
+  end
+
+  def ensure_index_params
+    if index_params[:limit].present? && !index_params[:limit].to_i.positive?
+      render json: {
+        message: 'Limit value must be greated than 0.'
+      }, status: 400
+    end
+    if index_params[:page].present? && !index_params[:page].to_i.positive?
+      render json: {
+        message: 'Page value must be greated than 0.'
+      }, status: 400
+    end
+  end
+
+  def create_update_params
+    params.permit(:color_id, :model_id, :license_plate, :available_from, :price, :year)
+  end
+
+  def ensure_create_params
+    required_params = %w[color_id model_id license_plate available_from price year]
+    missing_fields = required_params - create_update_params.keys
+
+    if missing_fields.present?
+      return render json: {
+        message: "The fields #{missing_fields.join(',')} must be provided for the car creation."
+      }, status: 400
+    end
+
+    color = Color.find_by(id: create_update_params[:color_id])
+    if color.nil?
+      return render json: {
+        message: "Color with given id (#{create_update_params[:color_id]}) not found."
+      }, status: 404
+    end
+
+    model = Model.find_by(id: create_update_params[:model_id])
+    if model.nil?
+      render json: {
+        message: "Model with given id (#{create_update_params[:color_id]}) not found."
+      }, status: 404
+    end
+
+    unless model.colors.pluck(:id).include?(color.id)
+      render json: {
+        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.join(', ')}"
+      }, status: 400
+    end
+
+    unless valide_license_plate?(create_update_params[:license_plate])
+      render json: {
+        message: 'License Plate must have one of the following formats AA-00-00, 00-AA-00 or 00-00-AA.'
+      }, status: 400
+    end
+
+    if create_update_params[:available_from].present?
+      unless valid_date?(create_update_params[:available_from])
+        render json: {
+          message: 'Available Drom must have the following format YY-mm-dd.'
+        }, status: 400
+      end
+    end
+
+    if create_update_params[:year] < 1886 && create_update_params[:year] > 2020
+      render json: {
+        message: 'The year of the car must be between 1886 and 2020.'
+      }, status: 400
+    end
+  end
+
+  def ensure_update_params
+    considered_params = %w[color_id model_id license_plate available_from price year]
+    intersect_fields = required_params & create_update_params.keys
+    model = @car.model
+    color = @car.color
+
+    if intersect_fields.blank?
+      return render json: {
+        message: "At least one of the car fields is required for the update (#{considered_params.join(', ')})."
+      }, status: 400
+    end
+
+    if create_update_params[:model_id].present?
+      model = Model.find_by(id: create_update_params[:model_id])
+      if model.nil?
+        render json: {
+          message: "Model with given id (#{create_update_params[:color_id]}) not found."
+        }, status: 404
+      end
+    end
+
+    if create_update_params[:color_id].present?
+      color = Color.find_by(id: create_update_params[:color_id])
+      if color.nil?
+        return render json: {
+          message: "Color with given id (#{create_update_params[:color_id]}) not found."
+        }, status: 404
+      end
+    end
+
+    unless model.colors.pluck(:id).include?(color.id)
+      render json: {
+        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.join(', ')}"
+      }, status: 400
+    end
+
+    if create_update_params[:license_plate].present?
+      unless valide_license_plate?(create_update_params[:license_plate])
+        render json: {
+          message: 'License Plate must have one of the following formats AA-00-00, 00-AA-00 or 00-00-AA.'
+        }, status: 400
+      end
+    end
+
+    if create_update_params[:license_plate].present?
+      unless valid_date?(create_update_params[:available_from])
+        render json: {
+          message: 'Available Drom must have the following format YY-mm-dd.'
+        }, status: 400
+      end
+    end
+
+    if create_update_params[:year].present?
+      if create_update_params[:year] < 1886 && create_update_params[:year] > 2020
+        render json: {
+          message: 'The year of the car must be between 1886 and 2020.'
+        }, status: 400
+      end
+    end
+  end
+
+  def valide_license_plate?(license_plate)
+    number_strings = 0
+    return false if license_plate.length != 8
+    return false unless license_plate[2] == '-' && license_plate[5] == '-'
+
+    number_strings += 1 if is_string?(license_plate[1..0])
+    number_strings += 1 if is_string?(license_plate[3..4])
+    number_strings += 1 if is_string?(license_plate[6..7])
+
+    number_strings == 1
+  end
+
+  def is_string?(parcial_license_plate)
+    false if Integer(parcial_license_plate)
+  rescue StandardError => e
+    true
+  end
+
+  def valid_date?(date_str)
+    false if Date.strptime(date_str, '%Y-%m-%d')
+  rescue StandardError => e
+    true
   end
 end
