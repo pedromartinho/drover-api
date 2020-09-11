@@ -17,7 +17,7 @@ This will build the docker images and you can run them, by executing the followi
 
 ```docker-compose up -d```
 
-Now that both imaged are up and running, we need to go inside the app container and create the database. To do so, you can run ```docker ps```, take the app container id and run the following line:
+Now that both imaged are up and running, we need to go inside the app container and create the database. To do so, you can run ```docker ps```, take the app container id and run the following line
 
 ```docker exec -it <container_id> /bin/bash```
 
@@ -56,7 +56,9 @@ I've to build 3 different endpoints:
 Each of the endpoints will have multiple validations explained in detail in the next topics.
 
 #### POST /cars | create
-The POST endpoint will be used for the creation of new cars
+The POST endpoint will be used for the creation of new cars. It receives a json object as input in request body. Here's an example a valid resquest for the creation of a car object
+
+```{ "color_id": 1, "model_id": 1, "license_plate": "AA-03-00", "available_from": "2022-02-11", "price": 100, "year": 2022 }```
 
 #### GET /cars | index
 The GET endpoint will be used to list all the available cars. Since it is a GET method, all the considered params are query params and are the following:
