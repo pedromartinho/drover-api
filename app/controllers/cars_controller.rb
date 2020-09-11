@@ -5,10 +5,37 @@ class CarsController < ApplicationController
   before_action :ensure_create_params, only: %i[create]
   before_action :ensure_update_params, only: %i[update]
 
-  # POST /cars
+  ####################################################################################################
+  # GET /cars
+
+  # Description
+  ### Endpoint to get the list of cars. By default it returns the first 20 cars ordered by price ASC
+  ### Cars that are only available after 3 months, are filtered.
+
+  # Pagination (limit, page)
+  ### Allows pagination with the parameters page and limit.
+
+  # Sort (order, field)
+  ### Allows sorted results by sending the params field (available_from, year, price and maker_n)
+  ### and order (descend or ascend).
+
+  # Filters (color_id, maker_id, min_months)
+  ### You can filter the results by color, maker and min_months (number of months availability
+  ### thershold)
+
+  # Result
+  ### message - info message
+  ### cars - array of cars according to the filters and pagination
+  ### total - total of cars found respecting the filters conditions
+  ### color - array of possible colors
+  ### model - array of possible models
+  ### makers - array of possible makers
+  ####################################################################################################
+
   def index
-    limit = index_params[:limit].present? ? index_params[:limit].to_i : 10
+    limit = index_params[:limit].present? ? index_params[:limit].to_i : 20
     offset = index_params[:page].present? ? (index_params[:page].to_i - 1) * limit : 0
+    min_months = index_params[:min_months].present? ? index_params[:min_months] : 3
     sql = "
       SELECT
         c.id AS id,
@@ -30,20 +57,18 @@ class CarsController < ApplicationController
           ON m.maker_id = ma.id
         INNER JOIN colors co
           ON c.color_id = co.id
+      WHERE ((((DATE_PART('year', c.available_from) - DATE_PART('year', CURRENT_DATE)) * 12) +
+          (DATE_PART('month', c.available_from) - DATE_PART('month', CURRENT_DATE)) <= #{min_months})
+        OR c.available_from IS NULL)
     "
 
-    if index_params[:color_id].present? || index_params[:color_id].present?
-      sql += ' WHERE '
-      if index_params[:model_id].present?
-        sql += " c.model_id = #{index_params[:model_id]} "
-        sql += ' AND ' if index_params[:color_id].present?
-      end
-      sql += " c.color_id = #{index_params[:color_id]}" if index_params[:color_id].present?
-    end
+    sql += " AND c.model_id = #{index_params[:model_id]} " if index_params[:model_id].present?
+    sql += " AND c.color_id = #{index_params[:color_id]}" if index_params[:color_id].present?
+
     sql += if sort_params[:field].present?
              sort_params[:order] == 'descend' ? " ORDER BY #{sort_params[:field]} desc " : "ORDER BY #{sort_params[:field]} asc "
            else
-             ' ORDER BY price desc '
+             ' ORDER BY price asc '
            end
 
     total = Car.find_by_sql(sql).count
@@ -67,11 +92,28 @@ class CarsController < ApplicationController
     }, status: 200
   end
 
+  ####################################################################################################
   # POST /cars
+
+  # Description
+  ### Endpoint for the car creation.
+
+  # Input
+  ### color_id* - id of the car color
+  ### model_id* - id of the car model
+  ### license_plate* - car license plate
+  ### available_from* - date from which the car become available
+  ### price* - car monthly subscription price
+  ### year* - car year
+
+  # Return
+  ### message - info message
+  ### car - object with car basic information
+  ####################################################################################################
   def create
-    car = Car.create!(create_params)
+    car = Car.create!(create_update_params)
     render json: {
-      message: "Car #{@car.id} udpated!",
+      message: "Car #{car.license_plate} created!",
       car:     {
         id:             car.id,
         license_plate:  car.license_plate,
@@ -89,9 +131,26 @@ class CarsController < ApplicationController
     }, status: 400
   end
 
-  # PUT /cars/:car_id
+  ####################################################################################################
+  # PUT /cars/:id
+
+  # Description
+  ### Endpoint for the car update.
+
+  # Input (at least one of the fields must be sent for the update)
+  ### color_id - id of the car color
+  ### model_id - id of the car model
+  ### license_plate - car license plate
+  ### available_from - date from which the car become available
+  ### price - car monthly subscription price
+  ### year - car year
+
+  # Return
+  ### message - info message
+  ### car - object with car basic information
+  ####################################################################################################
   def update
-    @car.update!(update_params)
+    @car.update!(create_update_params)
     render json: {
       message: "Car #{@car.id} udpated!",
       car:     {
@@ -117,6 +176,7 @@ class CarsController < ApplicationController
     params.permit(:id)
   end
 
+  # Ensure the specified car exists in the database
   def ensure_self_params
     @car = Car.find_by(id: self_params[:id].to_i)
     if @car.nil?
@@ -130,6 +190,7 @@ class CarsController < ApplicationController
     params.permit(:field, :order)
   end
 
+  # Ensure the sort params are within the expected values
   def ensure_sort_params
     available_fields = %w[available_from price year maker]
     if sort_params[:field].present? && !available_fields.include?(sort_params[:field])
@@ -145,12 +206,13 @@ class CarsController < ApplicationController
   end
 
   def index_params
-    params.permit(:color_id, :model_id, :page, :limit)
+    params.permit(:color_id, :model_id, :page, :limit, :min_months)
   end
 
+  # Ensure the pagination parameters are valid
   def ensure_index_params
     if index_params[:limit].present? && !index_params[:limit].to_i.positive?
-      render json: {
+      return render json: {
         message: 'Limit value must be greated than 0.'
       }, status: 400
     end
@@ -165,6 +227,8 @@ class CarsController < ApplicationController
     params.permit(:color_id, :model_id, :license_plate, :available_from, :price, :year)
   end
 
+  # Ensure all te parameters are valid for the car creation. Validate if the given ids correspond
+  # to objects that are in the database or the inputs have a valid format
   def ensure_create_params
     required_params = %w[color_id model_id license_plate available_from price year]
     missing_fields = required_params - create_update_params.keys
@@ -184,27 +248,27 @@ class CarsController < ApplicationController
 
     model = Model.find_by(id: create_update_params[:model_id])
     if model.nil?
-      render json: {
+      return render json: {
         message: "Model with given id (#{create_update_params[:color_id]}) not found."
       }, status: 404
     end
 
     unless model.colors.pluck(:id).include?(color.id)
-      render json: {
-        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.join(', ')}"
+      return render json: {
+        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.pluck(:name).join(', ')}"
       }, status: 400
     end
 
     unless valide_license_plate?(create_update_params[:license_plate])
-      render json: {
+      return render json: {
         message: 'License Plate must have one of the following formats AA-00-00, 00-AA-00 or 00-00-AA.'
       }, status: 400
     end
 
     if create_update_params[:available_from].present?
       unless valid_date?(create_update_params[:available_from])
-        render json: {
-          message: 'Available Drom must have the following format YY-mm-dd.'
+        return render json: {
+          message: 'Available From must have the following format YY-mm-dd and be higher or equal to today.'
         }, status: 400
       end
     end
@@ -216,22 +280,24 @@ class CarsController < ApplicationController
     end
   end
 
+  # Ensure all te parameters are valid for the car update. Validate if the given ids correspond
+  # to objects that are in the database or the inputs have a valid format
   def ensure_update_params
     considered_params = %w[color_id model_id license_plate available_from price year]
-    intersect_fields = required_params & create_update_params.keys
+    intersect_fields = considered_params & create_update_params.keys
     model = @car.model
     color = @car.color
 
     if intersect_fields.blank?
       return render json: {
-        message: "At least one of the car fields is required for the update (#{considered_params.join(', ')})."
+        message: "At least one of the car fields is required to have an update (#{considered_params.join(', ')})."
       }, status: 400
     end
 
     if create_update_params[:model_id].present?
       model = Model.find_by(id: create_update_params[:model_id])
       if model.nil?
-        render json: {
+        return render json: {
           message: "Model with given id (#{create_update_params[:color_id]}) not found."
         }, status: 404
       end
@@ -247,14 +313,14 @@ class CarsController < ApplicationController
     end
 
     unless model.colors.pluck(:id).include?(color.id)
-      render json: {
-        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.join(', ')}"
+      return render json: {
+        message: "Color is not a valid for the #{model.name}. The colors available for this model are #{model.colors.pluck(:name).join(', ')}"
       }, status: 400
     end
 
     if create_update_params[:license_plate].present?
       unless valide_license_plate?(create_update_params[:license_plate])
-        render json: {
+        return render json: {
           message: 'License Plate must have one of the following formats AA-00-00, 00-AA-00 or 00-00-AA.'
         }, status: 400
       end
@@ -262,7 +328,7 @@ class CarsController < ApplicationController
 
     if create_update_params[:license_plate].present?
       unless valid_date?(create_update_params[:available_from])
-        render json: {
+        return render json: {
           message: 'Available Drom must have the following format YY-mm-dd.'
         }, status: 400
       end
@@ -277,6 +343,7 @@ class CarsController < ApplicationController
     end
   end
 
+  # Validate if the license has one of the formats 'AA-00-00', '00-AA-00' or '00-00-AA'
   def valide_license_plate?(license_plate)
     number_strings = 0
     return false if license_plate.length != 8
@@ -289,15 +356,18 @@ class CarsController < ApplicationController
     number_strings == 1
   end
 
-  def is_string?(parcial_license_plate)
-    false if Integer(parcial_license_plate)
+  # Validate if string is integer or not
+  def is_string?(str)
+    false if Integer(str)
   rescue StandardError => e
     true
   end
 
+  # Validate the date format is YY-mm-dd and is bigger than the current date
   def valid_date?(date_str)
-    false if Date.strptime(date_str, '%Y-%m-%d')
+    date = Date.strptime(date_str, '%Y-%m-%d')
+    date >= Date.today
   rescue StandardError => e
-    true
+    false
   end
 end

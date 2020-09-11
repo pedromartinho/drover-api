@@ -5,6 +5,15 @@ namespace :populate do
     system('rails populate:cars')
   end
 
+  ####################################################################################################
+  # Populate makers colors and models
+  #
+  # Script Description
+  ### Based on the makers object, create a total of 3 brands, each brand with 2 models and each
+  ### model with 3 possible colors. The avalilable colors for each model within the same maker are
+  ### same.
+  ####################################################################################################
+
   task makers_colors_models: :environment do
     ActiveRecord::Base.transaction do
       makers.each do |maker|
@@ -34,6 +43,17 @@ namespace :populate do
     end
   end
 
+  ####################################################################################################
+  # Populate some test cars
+  #
+  # Script Description
+  ### Given the maker, models and colors created, it will be created 13 different cars for each
+  ### model and color combination: one that has avaliable from variable equal to null, meaning it is
+  ### currently available, and 12 that have availability on the year 2021, each with a different
+  ### month of that year. Some logic was added to ensure each license plate was diferent for each car
+  ### This results in a total of 234 created cars after the script is done.
+  ####################################################################################################
+
   task cars: :environment do
     ActiveRecord::Base.transaction do
       Model.find_each do |model|
@@ -58,6 +78,7 @@ namespace :populate do
     end
   end
 
+  # Variable with all the makers, models and colors considered
   def makers
     [
       {
