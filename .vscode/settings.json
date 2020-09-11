@@ -11,5 +11,10 @@
   // "ruby.rubocop.onSave": true
   "editor.formatOnSave": true,
   "editor.formatOnSaveTimeout": 5000,
-  "emmet.includeLanguages": { "erb": "html" }
+  "emmet.includeLanguages": {
+    "erb": "html"
+  },
+  "[markdown]": {
+    "editor.formatOnSave": false
+  }
 }
