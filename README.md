@@ -34,7 +34,7 @@ After that, you can write the presented script to generate **234 cars**, **3 bra
 
 If you have problems performing this steps, do not hesitate contact me or you can find the live application on <https://drover-api.herokuapp.com/cars>.
 
-## Peoject Description
+## Project Description
 
 ### Database
 
@@ -119,7 +119,7 @@ The returned object has the same format as the one returned in the create endpoi
 
 ### Deployment
 
-I've taken the liberty to deploy my solution on heroku in order to make it easier to test since you do not have to follow the setup process. You can find the solution here https://drover-api.herokuapp.com/cars.
+I've taken the liberty to deploy my solution on heroku in order to make it easier to test since you do not have to follow the setup process. You can find the solution here <https://drover-api.herokuapp.com/cars>.
 
 ## Final notes
 
