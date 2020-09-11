@@ -335,7 +335,7 @@ class CarsController < ApplicationController
     end
 
     if create_update_params[:year].present?
-      if create_update_params[:year] < 1886 && create_update_params[:year] > 2020
+      if create_update_params[:year] < 1886 || create_update_params[:year] > 2020
         render json: {
           message: 'The year of the car must be between 1886 and 2020.'
         }, status: 400
