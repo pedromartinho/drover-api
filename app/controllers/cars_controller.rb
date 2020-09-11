@@ -123,7 +123,7 @@ class CarsController < ApplicationController
         model_name:     car.model.name,
         maker_name:     car.maker.name
       }
-    }, status: 200
+    }, status: 201
   rescue StandardError => e
     render json: {
       message: 'Something went wrong in the car creation.',
@@ -192,7 +192,7 @@ class CarsController < ApplicationController
 
   # Ensure the sort params are within the expected values
   def ensure_sort_params
-    available_fields = %w[available_from price year maker]
+    available_fields = %w[available_from price year maker_n]
     if sort_params[:field].present? && !available_fields.include?(sort_params[:field])
       return render json: {
         message: "Column #{sort_params[:field]} not available for sorting. The possible values are #{available_fields.join(', ')}"
@@ -273,7 +273,7 @@ class CarsController < ApplicationController
       end
     end
 
-    if create_update_params[:year] < 1886 && create_update_params[:year] > 2020
+    if create_update_params[:year] < 1886 || create_update_params[:year] > 2020
       render json: {
         message: 'The year of the car must be between 1886 and 2020.'
       }, status: 400
